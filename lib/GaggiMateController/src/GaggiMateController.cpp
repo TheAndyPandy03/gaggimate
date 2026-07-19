@@ -34,7 +34,7 @@ void GaggiMateController::setup() {
     this->valve = new SimpleRelay(_config.valvePin, _config.valveOn);
     this->alt = new SimpleRelay(_config.altPin, _config.altOn);
     if (_config.capabilites.pressure) {
-        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 1);
+        this->adc = new ADSAdc(_config.pressureSda, _config.pressureScl, 4);
         this->pressureSensor = new PressureSensor(this->adc);
         this->grindPositionSensor = new GrindPositionSensor(this->adc);
     }

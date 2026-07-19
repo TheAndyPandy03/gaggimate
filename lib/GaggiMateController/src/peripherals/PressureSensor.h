@@ -5,8 +5,8 @@
 #include "TwoStateKalmanFilter/TwoStateKalmanFilter.h"
 #include <Arduino.h>
 
-// KF sample time assumes a single ADC channel, i.e. one reading per ADC_READ_INTERVAL_MS
-constexpr float PRESSURE_KF_SAMPLE_TIME_S = ADC_READ_INTERVAL_MS / 1000.0f;
+// KF sample time accounts for four ADC channels, each sampled once per full scan
+constexpr float PRESSURE_KF_SAMPLE_TIME_S = (ADC_READ_INTERVAL_MS * 4) / 1000.0f;
 constexpr float PRESSURE_KF_MEASUREMENT_NOISE = 0.01f; // R, (0.1 bar)^2 incl. pump ripple
 constexpr float PRESSURE_KF_ACCEL_NOISE = 0.5f;        // Q scale; raise to track faster, lower to smooth more
 constexpr float PRESSURE_KF_RATE_LEAK = 0.95f;         // damps overshoot and low-frequency wave amplification
