@@ -12,6 +12,7 @@
 #include <peripherals/Pump.h>
 #include <peripherals/SimpleRelay.h>
 #include <peripherals/addons/GearpumpAddon.h>
+#include <peripherals/GrindPositionSensor.h>
 #include <vector>
 
 constexpr double PING_TIMEOUT_SECONDS = 20.0;
@@ -49,6 +50,7 @@ class GaggiMateController {
     DigitalInput *brewBtn = nullptr;
     DigitalInput *steamBtn = nullptr;
     PressureSensor *pressureSensor = nullptr;
+    GrindPositionSensor *grindPositionSensor = nullptr;
     LedController *ledController = nullptr;
     DistanceSensor *distanceSensor = nullptr;
     ADSAdc *adc = nullptr;
