@@ -1,5 +1,6 @@
 #include "ADSAdc.h"
 #include "Wire.h"
+#include <utility>
 
 ADSAdc::ADSAdc(uint8_t sda_pin, uint8_t scl_pin, uint8_t numChannels)
     : _sda_pin(sda_pin), _scl_pin(scl_pin), _numChannels(numChannels), taskHandle(nullptr) {}
@@ -23,15 +24,17 @@ void ADSAdc::loop() {
     if (ads->isConnected() && ads->isReady()) {
         int reading = ads->getValue();
         _value[_currentChannel] = reading;
-        if (_callback) {
-            _callback(_currentChannel, reading);
+        for (const auto &callback : _callbacks) {
+            callback(_currentChannel, reading);
         }
         _currentChannel = (_currentChannel + 1) % _numChannels;
         ads->requestADC(_currentChannel);
     }
 }
 
-void ADSAdc::registerCallback(ads_callback_t callback) { _callback = callback; }
+void ADSAdc::registerCallback(ads_callback_t callback) {
+    _callbacks.push_back(std::move(callback));
+}
 
 [[noreturn]] void ADSAdc::loopTask(void *arg) {
     TickType_t lastWake = xTaskGetTickCount();

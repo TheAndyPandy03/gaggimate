@@ -3,6 +3,7 @@
 
 #include <ADS1X15.h>
 #include <Arduino.h>
+#include <vector>
 
 constexpr int ADC_READ_INTERVAL_MS = 30;
 constexpr float ADC_STEP = 6.144f / 32767.0f;
@@ -27,7 +28,7 @@ class ADSAdc {
     uint8_t _currentChannel = 0;
     int _value[4] = {0, 0, 0, 0};
     ADS1115 *ads = nullptr;
-    ads_callback_t _callback;
+    std::vector<ads_callback_t> _callbacks;
     xTaskHandle taskHandle;
 
     const char *LOG_TAG = "ADSAdc";
