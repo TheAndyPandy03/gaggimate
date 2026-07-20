@@ -257,7 +257,7 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
-                              float heaterPower) {
+                              float heaterPower, float grindPosition) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
@@ -265,6 +265,7 @@ void Controller::setupBluetooth() {
         this->currentPumpPower = pumpPower;
         this->currentHeaterPower = heaterPower;
         this->currentPuckResistance = puckResistance;
+        this->currentGrindPosition = grindPosition;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
