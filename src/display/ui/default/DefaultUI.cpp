@@ -269,6 +269,9 @@ void DefaultUI::loop() {
         grindWeightTarget = FloatValue(controller->getSettings().getTargetGrindVolume());
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
 
+        grindPosition = FloatValue(controller->getCurrentGrindPosition());
+        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_POSITION, grindPosition);
+
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
         effect_mgr.evaluate_all();
@@ -394,6 +397,7 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_POSITION, grindPosition);
 
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);

@@ -134,6 +134,7 @@ class DefaultUI {
     Value steamReady = BooleanValue(false);
     Value grindWeightTarget = FloatValue(18.0);
     Value grindTimeTarget = StringValue("0:15");
+    Value grindPosition = FloatValue(0.0);
 
     int profileDirty = 0;
     int currentProfileIdx = 0;
