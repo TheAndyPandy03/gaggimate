@@ -369,9 +369,10 @@ void GaggiMateController::handleSerialCommand(char c) {
             ESP_LOGI("Controller", "║  ├─ Pressure: %.2f", pressureSensor->getPressure());
             ESP_LOGI("Controller", "║  ├─ Flow: %.2f", dimmedPump->getPumpFlow());
             ESP_LOGI("Controller", "║  ├─ Pump Power: %.2f", dimmedPump->getPowerTarget());
+            ESP_LOGI("Controller", "║  ├─ Grind Position: %.2f", grindPositionSensor->getPosition());
+            ESP_LOGI("Controller", "║  └─ Grind ADC Raw: %d", grindPositionSensor->getRawValue());
         }
-        ESP_LOGI("Controller", "║  └─ Temperature: %.2f", thermocouple->read());
-        ESP_LOGI("Controller", "║");
+        ESP_LOGI("Controller", "║  ├─ Temperature: %.2f", thermocouple->read());
         ESP_LOGI("Controller", "╠═ Control");
         if (_config.capabilites.pressure) {
             auto dimmedPump = static_cast<DimmedPump *>(pump);
