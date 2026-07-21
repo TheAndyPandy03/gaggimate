@@ -77,6 +77,7 @@ class DefaultUI {
     void updateSystemStatus();
     void updateProfileInfo();
     void updateBoiler();
+    void updateGrind();
     void updateBrewProcess();
     void updateMenuScreen();
     String getErrorMessage();
@@ -134,7 +135,7 @@ class DefaultUI {
     Value steamReady = BooleanValue(false);
     Value grindWeightTarget = FloatValue(18.0);
     Value grindTimeTarget = StringValue("0:15");
-    Value grindPosition = FloatValue(0.0);
+    GrinderValue grind;
 
     int profileDirty = 0;
     int currentProfileIdx = 0;

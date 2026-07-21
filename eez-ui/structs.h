@@ -21,7 +21,7 @@ enum FlowStructures {
     FLOW_STRUCTURE_BOILER = 16386,
     FLOW_STRUCTURE_UI_FLAGS = 16387,
     FLOW_STRUCTURE_BREW_PROCESS = 16388,
-    FLOW_STRUCTURE_GRINDER = 16389
+    FLOW_STRUCTURE_GRIND = 16389
 };
 
 enum FlowArrayOfStructures {
@@ -30,7 +30,7 @@ enum FlowArrayOfStructures {
     FLOW_ARRAY_OF_STRUCTURE_BOILER = 81922,
     FLOW_ARRAY_OF_STRUCTURE_UI_FLAGS = 81923,
     FLOW_ARRAY_OF_STRUCTURE_BREW_PROCESS = 81924,
-    FLOW_ARRAY_OF_STRUCTURE_GRINDER = 81925
+    FLOW_ARRAY_OF_STRUCTURE_GRIND = 81925
 };
 
 enum SystemStatusFlowStructureFields {
@@ -111,9 +111,9 @@ enum BrewProcessFlowStructureFields {
     FLOW_STRUCTURE_BREW_PROCESS_NUM_FIELDS
 };
 
-enum GrinderFlowStructureFields {
-    FLOW_STRUCTURE_GRINDER_FIELD_POSITION = 0,
-    FLOW_STRUCTURE_GRINDER_NUM_FIELDS
+enum grindFlowStructureFields {
+    FLOW_STRUCTURE_GRIND_FIELD_POSITION = 0,
+    FLOW_STRUCTURE_GRIND_NUM_FIELDS
 };
 
 struct SystemStatusValue {
@@ -597,27 +597,27 @@ struct BrewProcessValue {
 };
 
 typedef ArrayOf<BrewProcessValue, FLOW_ARRAY_OF_STRUCTURE_BREW_PROCESS> ArrayOfBrewProcessValue;
-struct GrinderValue {
+struct grindValue {
     Value value;
     
-    GrinderValue() {
-        value = Value::makeArrayRef(FLOW_STRUCTURE_GRINDER_NUM_FIELDS, FLOW_STRUCTURE_GRINDER, 0);
+    grindValue() {
+        value = Value::makeArrayRef(FLOW_STRUCTURE_GRIND_NUM_FIELDS, FLOW_STRUCTURE_GRIND, 0);
     }
     
-    GrinderValue(Value value) : value(value) {}
+    grindValue(Value value) : value(value) {}
     
     operator Value() const { return value; }
     
     operator bool() const { return value.isArray(); }
     
     float position() {
-        return value.getArray()->values[FLOW_STRUCTURE_GRINDER_FIELD_POSITION].getFloat();
+        return value.getArray()->values[FLOW_STRUCTURE_GRIND_FIELD_POSITION].getFloat();
     }
     void position(float position) {
-        value.getArray()->values[FLOW_STRUCTURE_GRINDER_FIELD_POSITION] = FloatValue(position);
+        value.getArray()->values[FLOW_STRUCTURE_GRIND_FIELD_POSITION] = FloatValue(position);
     }
 };
 
-typedef ArrayOf<GrinderValue, FLOW_ARRAY_OF_STRUCTURE_GRINDER> ArrayOfGrinderValue;
+typedef ArrayOf<grindValue, FLOW_ARRAY_OF_STRUCTURE_GRIND> ArrayOfgrindValue;
 
 #endif /*EEZ_LVGL_UI_STRUCTS_H*/

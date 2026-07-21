@@ -256,6 +256,7 @@ void DefaultUI::loop() {
         updateSystemStatus();
         updateProfileInfo();
         updateBoiler();
+        updateGrind();
         updateBrewProcess();
         currentWeight = FloatValue(bluetoothWeight);
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
@@ -268,9 +269,6 @@ void DefaultUI::loop() {
         }
         grindWeightTarget = FloatValue(controller->getSettings().getTargetGrindVolume());
         eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
-
-        grindPosition = FloatValue(controller->getCurrentGrindPosition());
-        eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_POSITION, grindPosition);
 
         handleScreenChange();
         currentScreen = static_cast<ScreensEnum>(eez_flow_get_current_screen());
@@ -397,7 +395,7 @@ void DefaultUI::setupState() {
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SCALE_WEIGHT_CURRENT, currentWeight);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_WEIGHT_TARGET, grindWeightTarget);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_TIME_TARGET, grindTimeTarget);
-    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRIND_POSITION, grindPosition);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_GRINDER, grind);
 
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_SYSTEM, systemStatus);
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_PREVIEW_PROFILE, previewProfileInfo);
@@ -410,6 +408,7 @@ void DefaultUI::setupState() {
     updateSystemStatus();
     updateProfileInfo();
     updateBoiler();
+    updateGrind();
     updateBrewProcess();
 
     effect_mgr.use_effect([this]() { return currentScreen == SCREEN_ID_INFO_SCREEN; },
@@ -637,6 +636,10 @@ void DefaultUI::updateBoiler() {
     boiler.target_pressure(controller->getTargetPressure());
     boiler.max_temperature(160.0f);
     boiler.max_pressure(settings.getPressureScaling());
+}
+
+void DefaultUI::updateGrind() {
+    grind.position(controller->getCurrentGrindPosition());
 }
 
 // Mirror the live BrewProcess into brew_process_info; every field must stay valid/typed or the StatusScreen flow aborts.
