@@ -4,6 +4,7 @@ import { OverviewChart } from '../../../components/OverviewChart.jsx';
 import { Spinner } from '../../../components/Spinner.jsx';
 import Section from '../../../components/Card.jsx';
 import PumpFlowCalibration from '../../../components/PumpFlowCalibration/index.jsx';
+import GrinderPositionCalibration from '../../../components/GrinderPositionCalibration/index.jsx';
 import { SettingsFormField } from '../../../components/SettingsFormField.jsx';
 
 export function CalibrationTab({ formData, onChange }) {
@@ -197,6 +198,11 @@ export function CalibrationTab({ formData, onChange }) {
             </div>
           </div>
         )}
+      </Section>
+
+      {/* Grinder Position Calibration Section */}
+      <Section title='Grinder Position Calibration'>
+        <GrinderPositionCalibration formData={formData} onChange={onChange} />
       </Section>
 
       {/* Pump Flow Tuning Section */}
