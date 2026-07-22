@@ -9,15 +9,14 @@ export default function GrinderStepSettings({
   minSteps,
   maxSteps,
 }) {
-  const validSteps =
-    Number.isInteger(steps) && steps >= minSteps && steps <= maxSteps;
+  const validSteps = Number.isInteger(steps) && steps >= minSteps && steps <= maxSteps;
 
   return (
     <div className='space-y-3'>
       <SettingsFormField
         label='Number of Grind Steps'
         htmlFor='grinderSteps'
-        helpText='Total displayed grind positions, including both endpoints. This can be changed without recalibrating the endpoints.'
+        helpText='Total displayed grind positions, including both endpoints. This can be changed without recalibrating.'
         noMargin
       >
         <div className='flex max-w-sm items-center gap-2'>

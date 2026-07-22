@@ -1,5 +1,6 @@
 import { SettingsFormField } from '../SettingsFormField.jsx';
 import GrinderStatusPanel from './StatusPanel.jsx';
+import CalibrationQuality from './CalibrationQuality.jsx';
 
 export default function GrinderCalibrationWizard({
   wizardStep,
@@ -9,6 +10,9 @@ export default function GrinderCalibrationWizard({
   coarseRaw,
   steps,
   setSteps,
+  reverseDirection,
+  setReverseDirection,
+  reverseSuggested,
   calibrationSpan,
   calibrated,
   saveState,
@@ -20,7 +24,11 @@ export default function GrinderCalibrationWizard({
   minCalibrationSpan,
   sensorStable,
   currentRaw,
+  sensorNoise,
   liveStatusProps,
+  fineReached,
+  middleReached,
+  coarseReached,
 }) {
   return (
     <div className='space-y-5'>
@@ -28,20 +36,15 @@ export default function GrinderCalibrationWizard({
         <>
           <div className='alert alert-info'>
             <span>
-              This wizard will capture the fine and coarse endpoints of the grinder position
-              sensor. Do not use burr contact as the fine endpoint.
+              This wizard captures the fine and coarse endpoints, validates the sensor range, and
+              verifies the resulting grinder steps. Do not use burr contact as the fine endpoint.
             </span>
           </div>
 
           <div className='flex flex-wrap gap-3'>
-            <button
-              type='button'
-              className='btn btn-primary'
-              onClick={() => setWizardStep('fine')}
-            >
+            <button type='button' className='btn btn-primary' onClick={() => setWizardStep('fine')}>
               Start Calibration
             </button>
-
             <button type='button' className='btn btn-ghost' onClick={closeWizard}>
               Cancel
             </button>
@@ -52,11 +55,9 @@ export default function GrinderCalibrationWizard({
       {wizardStep === 'fine' && (
         <>
           <div className='alert alert-info'>
-            <span>Step 1 of 3: Move the grinder to its finest normal position.</span>
+            <span>Step 1 of 3: Move the grinder to its finest normal position and wait for stability.</span>
           </div>
-
           <GrinderStatusPanel {...liveStatusProps} />
-
           <button
             type='button'
             className='btn btn-primary'
@@ -71,18 +72,13 @@ export default function GrinderCalibrationWizard({
       {wizardStep === 'coarse' && (
         <>
           <div className='alert alert-info'>
-            <span>Step 2 of 3: Move the grinder to its coarsest position.</span>
+            <span>Step 2 of 3: Move the grinder to its coarsest position and wait for stability.</span>
           </div>
-
           <GrinderStatusPanel {...liveStatusProps} />
-
-          {fineRaw !== null && (
-            <div className='rounded-box border-base-300 bg-base-100 border p-4'>
-              <div className='text-base-content/70 text-sm'>Captured fine endpoint</div>
-              <div className='mt-1 text-2xl font-semibold'>{fineRaw}</div>
-            </div>
-          )}
-
+          <div className='rounded-box border-base-300 bg-base-100 border p-4'>
+            <div className='text-base-content/70 text-sm'>Captured fine endpoint</div>
+            <div className='mt-1 text-2xl font-semibold'>{fineRaw ?? '—'}</div>
+          </div>
           <button
             type='button'
             className='btn btn-primary'
@@ -97,7 +93,7 @@ export default function GrinderCalibrationWizard({
       {wizardStep === 'steps' && (
         <>
           <div className='alert alert-info'>
-            <span>Step 3 of 3: Confirm the number of displayed grinder positions.</span>
+            <span>Step 3 of 3: Review the range and choose the displayed number of grind positions.</span>
           </div>
 
           <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
@@ -105,18 +101,18 @@ export default function GrinderCalibrationWizard({
               <div className='text-base-content/70 text-sm'>Fine ADC</div>
               <div className='mt-1 text-2xl font-semibold'>{fineRaw ?? '—'}</div>
             </div>
-
             <div className='rounded-box border-base-300 bg-base-100 border p-4'>
               <div className='text-base-content/70 text-sm'>Coarse ADC</div>
               <div className='mt-1 text-2xl font-semibold'>{coarseRaw ?? '—'}</div>
             </div>
-
             <div className='rounded-box border-base-300 bg-base-100 border p-4'>
               <div className='text-base-content/70 text-sm'>Calibration span</div>
               <div className='mt-1 text-2xl font-semibold'>{calibrationSpan}</div>
               <div className='text-base-content/60 text-sm'>ADC counts</div>
             </div>
           </div>
+
+          <CalibrationQuality calibrationSpan={calibrationSpan} sensorNoise={sensorNoise} />
 
           <SettingsFormField
             label='Number of Grind Steps'
@@ -132,7 +128,6 @@ export default function GrinderCalibrationWizard({
               >
                 −
               </button>
-
               <input
                 id='grinderStepsWizard'
                 type='number'
@@ -146,7 +141,6 @@ export default function GrinderCalibrationWizard({
                   setSteps(Number.isFinite(value) ? value : minSteps);
                 }}
               />
-
               <button
                 type='button'
                 className='btn btn-square btn-outline'
@@ -157,11 +151,38 @@ export default function GrinderCalibrationWizard({
             </div>
           </SettingsFormField>
 
+          {reverseSuggested && !reverseDirection && (
+            <div className='alert alert-warning'>
+              <div>
+                <div className='font-semibold'>Reverse direction suggested</div>
+                <div className='text-sm'>
+                  The captured raw values run in the opposite numerical direction. Enable reversal
+                  only when the displayed grinder number moves opposite to your preferred scale.
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className='rounded-box border-base-300 bg-base-100 border p-4'>
+            <label className='flex cursor-pointer items-center justify-between gap-4'>
+              <div>
+                <div className='font-medium'>Reverse displayed direction</div>
+                <div className='text-base-content/60 mt-1 text-sm'>
+                  Flip the displayed grinder numbering without changing the captured endpoints.
+                </div>
+              </div>
+              <input
+                type='checkbox'
+                className='toggle toggle-primary'
+                checked={reverseDirection}
+                onChange={event => setReverseDirection(event.target.checked)}
+              />
+            </label>
+          </div>
+
           {calibrationSpan < minCalibrationSpan && (
             <div className='alert alert-error'>
-              <span>
-                The fine and coarse readings are too close together. Repeat the endpoint capture.
-              </span>
+              <span>The fine and coarse readings are too close together. Recapture both endpoints.</span>
             </div>
           )}
 
@@ -174,12 +195,7 @@ export default function GrinderCalibrationWizard({
             >
               {saveState === 'saving' ? 'Applying…' : 'Apply Calibration'}
             </button>
-
-            <button
-              type='button'
-              className='btn btn-outline'
-              onClick={() => setWizardStep('fine')}
-            >
+            <button type='button' className='btn btn-outline' onClick={() => setWizardStep('fine')}>
               Recapture Endpoints
             </button>
           </div>
@@ -189,26 +205,34 @@ export default function GrinderCalibrationWizard({
       {wizardStep === 'verify' && (
         <>
           <div className='alert alert-success'>
-            <span>Calibration applied. Rotate the grinder through its full range to verify it.</span>
+            <span>Calibration applied. Rotate through the full range to complete verification.</span>
           </div>
-
           <GrinderStatusPanel {...liveStatusProps} />
 
           <div className='grid grid-cols-1 gap-3 sm:grid-cols-3'>
-            <div className='rounded-box border-base-300 bg-base-100 border p-3 text-center'>
-              Fine reached
-            </div>
-
-            <div className='rounded-box border-base-300 bg-base-100 border p-3 text-center'>
-              Middle reached
-            </div>
-
-            <div className='rounded-box border-base-300 bg-base-100 border p-3 text-center'>
-              Coarse reached
-            </div>
+            {[
+              ['Fine reached', fineReached],
+              ['Middle reached', middleReached],
+              ['Coarse reached', coarseReached],
+            ].map(([label, reached]) => (
+              <div
+                key={label}
+                className={`rounded-box border p-3 text-center ${
+                  reached ? 'border-success bg-success/10' : 'border-base-300 bg-base-100'
+                }`}
+              >
+                <div className='text-xl'>{reached ? '✓' : '○'}</div>
+                <div>{label}</div>
+              </div>
+            ))}
           </div>
 
-          <button type='button' className='btn btn-primary' onClick={closeWizard}>
+          <button
+            type='button'
+            className='btn btn-primary'
+            onClick={closeWizard}
+            disabled={!fineReached || !middleReached || !coarseReached}
+          >
             Finish
           </button>
         </>
