@@ -9,7 +9,10 @@ export default function GrinderStepSettings({
   minSteps,
   maxSteps,
 }) {
-  const validSteps = Number.isInteger(steps) && steps >= minSteps && steps <= maxSteps;
+  const validSteps =
+    Number.isInteger(steps) &&
+    steps >= minSteps &&
+    steps <= maxSteps;
 
   return (
     <div className='space-y-3'>
@@ -23,7 +26,8 @@ export default function GrinderStepSettings({
           <button
             type='button'
             className='btn btn-square btn-outline'
-            onClick={() => setSteps(value => Math.max(minSteps, value - 1))}
+            onClick={() => setSteps(Math.max(minSteps, steps - 1))}
+            disabled={!Number.isFinite(steps) || steps <= minSteps}
           >
             −
           </button>
@@ -34,7 +38,9 @@ export default function GrinderStepSettings({
             min={minSteps}
             max={maxSteps}
             step='1'
-            className='input input-bordered w-full text-center'
+            className={`input input-bordered w-full text-center ${
+              validSteps ? '' : 'input-error'
+            }`}
             value={steps}
             onChange={event => {
               const value = Number.parseInt(event.target.value, 10);
@@ -45,12 +51,19 @@ export default function GrinderStepSettings({
           <button
             type='button'
             className='btn btn-square btn-outline'
-            onClick={() => setSteps(value => Math.min(maxSteps, value + 1))}
+            onClick={() => setSteps(Math.min(maxSteps, steps + 1))}
+            disabled={!Number.isFinite(steps) || steps >= maxSteps}
           >
             +
           </button>
         </div>
       </SettingsFormField>
+
+      {!validSteps && (
+        <div className='text-error text-sm'>
+          Step count must be a whole number from {minSteps} to {maxSteps}.
+        </div>
+      )}
 
       <button
         type='button'
