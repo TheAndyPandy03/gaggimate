@@ -257,7 +257,7 @@ void Controller::setupBluetooth() {
     });
     pluginManager->on("ota:update:end", [this](Event const &) { applyConnectionPriority(true); });
     comms.onSensorData([this](float temp, float pressure, float puckFlow, float pumpFlow, float puckResistance, float pumpPower,
-                              float heaterPower, float grindPosition) {
+                              float heaterPower, float grindPosition, int32_t grinderPositionRaw) {
         onTempRead(temp);
         this->pressure = pressure;
         this->currentPuckFlow = puckFlow;
@@ -266,6 +266,7 @@ void Controller::setupBluetooth() {
         this->currentHeaterPower = heaterPower;
         this->currentPuckResistance = puckResistance;
         this->currentGrindPosition = grindPosition;
+        this->currentGrinderPositionRaw = grinderPositionRaw;
         pluginManager->trigger("boiler:pressure:change", "value", pressure);
         pluginManager->trigger("pump:puck-flow:change", "value", puckFlow);
         pluginManager->trigger("pump:flow:change", "value", pumpFlow);
@@ -388,6 +389,7 @@ void Controller::onSystemInfo(const char *hardware, const char *version, uint32_
         setPressureScale();
         setPidSettings();
         setPumpModelCoeffs();
+        setGrinderCalibration();
         configResendUntil = millis() + CONFIG_RESEND_WINDOW_MS;
         lastConfigResend = millis();
     }
@@ -560,6 +562,7 @@ void Controller::loop() {
         setPressureScale();
         setPidSettings();
         setPumpModelCoeffs();
+        setGrinderCalibration();
         lastConfigResend = now;
     }
 
@@ -798,6 +801,33 @@ void Controller::setPumpModelCoeffs(void) {
                                gearpumpEnabled ? settings.getIntegralGain() : DEFAULT_INTEGRAL_GAIN, settings.getMaxPumpPower(),
                                slip[0], slip[1], slip[2], slip[3]);
     }
+}
+
+void Controller::setGrinderCalibration() {
+    if (!systemInfo.capabilities.pressure || !comms.isConnected()) {
+        return;
+    }
+
+    const int rawFine = settings.getGrinderRawFine();
+    const int rawCoarse = settings.getGrinderRawCoarse();
+    const int steps = settings.getGrinderSteps();
+
+    // A negative endpoint means calibration has not been completed yet.
+    // Keep the controller's default mapping until both valid endpoints exist.
+    if (rawFine < 0 || rawCoarse < 0 || rawFine == rawCoarse) {
+        ESP_LOGV(
+            LOG_TAG,
+            "Grinder calibration not sent: fine=%d, coarse=%d",
+            rawFine,
+            rawCoarse);
+        return;
+    }
+
+    comms.sendGrinderCalibration(
+        rawFine,
+        rawCoarse,
+        static_cast<uint32_t>(steps),
+        settings.isGrinderReverseDirection());
 }
 
 void Controller::setPidSettings() {

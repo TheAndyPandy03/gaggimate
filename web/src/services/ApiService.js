@@ -193,6 +193,8 @@ export default class ApiService {
       currentPuckResistance: message.pkr ?? 0,
       currentPuckFlow: message.pf ?? 0,
       currentCoffeeVolume: message.cv ?? 0,
+      currentGrinderPosition: message.gpos ?? 0,
+    currentGrinderPositionRaw: message.graw ?? null,
     };
     const historyEntry = { ...newStatus };
     delete historyEntry.process;
@@ -235,6 +237,8 @@ export const machine = signal({
     grindTargetVolume: 0,
     grindTarget: 0,
     grindActive: false,
+    currentGrinderPosition: 0,
+    currentGrinderPositionRaw: null,
     process: null,
   },
   capabilities: {

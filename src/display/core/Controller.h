@@ -36,6 +36,7 @@ class Controller {
     void setPumpModelCoeffs();
     void setPidSettings();
     void setTargetGrindDuration(int duration);
+    void setGrinderCalibration();
     void setTargetGrindVolume(double volume);
 
     int getMode() const;
@@ -59,6 +60,7 @@ class Controller {
     virtual float getCurrentHeaterPower() const { return currentHeaterPower; }
     virtual float getCurrentPuckResistance() const { return currentPuckResistance; }
     virtual float getCurrentGrindPosition() const { return currentGrindPosition; }
+    virtual int32_t getCurrentGrinderPositionRaw() const { return currentGrinderPositionRaw;}
     virtual float getCurrentCoffeeVolume() const { return currentCoffeeVolume; }
 
     bool isTaskHealthy() const { return is_task_healthy(eTaskGetState(logicTaskHandle)); }
@@ -177,6 +179,7 @@ class Controller {
     float currentHeaterPower = 0.0f;
     float currentPuckResistance = 0.0f;
     float currentGrindPosition = 0.0f;
+    int32_t currentGrinderPositionRaw = 0;
     float currentCoffeeVolume = 0.0f;
     float targetFlow = 0.0f;
     int tofDistance = 0;

@@ -103,6 +103,16 @@ void Settings::setTargetGrindVolume(double target_grind_volume) { targetGrindVol
 
 void Settings::setTargetGrindDuration(const int target_duration) { targetGrindDuration.set(target_duration); }
 
+void Settings::setGrinderCalibration(int rawFine,
+                                     int rawCoarse,
+                                     int steps,
+                                     bool reverseDirection) {
+    grinderRawFine.set(rawFine);
+    grinderRawCoarse.set(rawCoarse);
+    grinderSteps.set(std::clamp(steps, 2, 200));
+    grinderReverseDirection.set(reverseDirection);
+}
+
 void Settings::setBrewDelay(double brew_Delay) { brewDelay.set(std::clamp(brew_Delay, 0.0, 4000.0)); }
 
 void Settings::setGrindDelay(double grind_Delay) { grindDelay.set(std::clamp(grind_Delay, 0.0, 4000.0)); }

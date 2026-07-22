@@ -44,6 +44,7 @@ message Payload {
         PressureScale pressure_scale = 9;
         Tare tare = 10;
         LedControl led = 11;
+        GrinderCalibration grinder_calibration = 12;
 
         // Responses: controller -> display
         SystemInfo system_info = 20;
@@ -154,6 +155,13 @@ message LedControl {
     repeated LedChannel channels = 1;
 }
 
+message GrinderCalibration {
+    int32 raw_fine = 1;
+    int32 raw_coarse = 2;
+    uint32 steps = 3;
+    bool reverse_direction = 4;
+}
+
 // ---------------------------------------------------------------------------
 // Responses (controller -> display)
 // ---------------------------------------------------------------------------
@@ -193,6 +201,7 @@ message SensorData {
     float pump_power = 5;   // pump power 0..100 %
     float heater_power = 6; // heater power 0..100 %
     float grind_position = 7;
+    int32 grind_position_raw = 8;
 }
 
 message ButtonState {

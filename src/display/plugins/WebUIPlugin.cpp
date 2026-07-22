@@ -182,6 +182,8 @@ void WebUIPlugin::loop() {
         statusDoc["lat"] = -1; // BLE round-trip latency (ms); -1 = not yet measured
         statusDoc["pw"] = controller->getCurrentPumpPower();
         statusDoc["hp"] = controller->getCurrentHeaterPower();
+        statusDoc["gpos"] = controller->getCurrentGrindPosition();
+        statusDoc["graw"] = controller->getCurrentGrinderPositionRaw();
 
         if (controller->getClientController()->getClient()->isConnected()) {
             statusDoc["rssi"] = controller->getClientController()->getClient()->getRssi();
@@ -715,7 +717,43 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
                 settings->setBrewDelay(request->arg("brewDelay").toDouble());
             if (request->hasArg("grindDelay"))
                 settings->setGrindDelay(request->arg("grindDelay").toDouble());
-            if (request->hasArg("timezone"))
+            if (request->hasArg("grinderRawFine") ||
+                request->hasArg("grinderRawCoarse") ||
+                request->hasArg("grinderSteps") ||
+                request->hasArg("grinderReverseDirection")) {
+
+                int rawFine = settings->getGrinderRawFine();
+                int rawCoarse = settings->getGrinderRawCoarse();
+                int steps = settings->getGrinderSteps();
+                bool reverseDirection = settings->isGrinderReverseDirection();
+
+                if (request->hasArg("grinderRawFine")) {
+                    rawFine = request->arg("grinderRawFine").toInt();
+                }
+
+                if (request->hasArg("grinderRawCoarse")) {
+                    rawCoarse = request->arg("grinderRawCoarse").toInt();
+                }
+
+                if (request->hasArg("grinderSteps")) {
+                    steps = request->arg("grinderSteps").toInt();
+                }
+
+                if (request->hasArg("grinderReverseDirection")) {
+                    reverseDirection =
+                        request->arg("grinderReverseDirection") == "true" ||
+                        request->arg("grinderReverseDirection") == "1" ||
+                        request->arg("grinderReverseDirection") == "on";
+                }
+
+                settings->setGrinderCalibration(
+                    rawFine,
+                    rawCoarse,
+                    steps,
+                    reverseDirection
+                );
+            }
+                if (request->hasArg("timezone"))
                 settings->setTimezone(request->arg("timezone"));
             settings->setClockFormat(request->hasArg("clock24hFormat"));
             if (request->hasArg("standbyTimeout"))
@@ -808,6 +846,7 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
         pluginManager->trigger("settings:changed");
         controller->setTargetTemp(controller->getTargetTemp());
         controller->setPumpModelCoeffs();
+        controller->setGrinderCalibration();
     }
 
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -842,6 +881,10 @@ void WebUIPlugin::handleSettings(AsyncWebServerRequest *request) const {
     doc["momentaryButtons"] = settings.isMomentaryButtons();
     doc["brewDelay"] = settings.getBrewDelay();
     doc["grindDelay"] = settings.getGrindDelay();
+    doc["grinderRawFine"] = settings.getGrinderRawFine();
+    doc["grinderRawCoarse"] = settings.getGrinderRawCoarse();
+    doc["grinderSteps"] = settings.getGrinderSteps();
+    doc["grinderReverseDirection"] = settings.isGrinderReverseDirection();
     doc["delayAdjust"] = settings.isDelayAdjust();
     doc["timezone"] = settings.getTimezone();
     doc["clock24hFormat"] = settings.isClock24hFormat();

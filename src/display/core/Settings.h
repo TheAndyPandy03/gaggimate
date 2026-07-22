@@ -77,6 +77,10 @@ class Settings {
     float getPressureScaling() const { return pressureScaling.get(); }
     double getTargetGrindVolume() const { return targetGrindVolume.get(); }
     int getTargetGrindDuration() const { return targetGrindDuration.get(); }
+    int getGrinderRawFine() const { return grinderRawFine.get(); }
+    int getGrinderRawCoarse() const { return grinderRawCoarse.get(); }
+    int getGrinderSteps() const { return grinderSteps.get(); }
+    bool isGrinderReverseDirection() const { return grinderReverseDirection.get(); }
     int getStartupMode() const { return startupMode.get(); }
     int getStandbyTimeout() const { return standbyTimeout.get(); }
     double getBrewDelay() const { return brewDelay.get(); }
@@ -164,6 +168,7 @@ class Settings {
     void setPressureScaling(float pressure_scaling);
     void setTargetGrindVolume(double target_grind_volume);
     void setTargetGrindDuration(int target_duration);
+    void setGrinderCalibration(int rawFine, int rawCoarse, int steps, bool reverseDirection);
     void setStartupMode(int startup_mode);
     void setStandbyTimeout(int standby_timeout);
     void setBrewDelay(double brewDelay);
@@ -247,6 +252,13 @@ class Settings {
     Property<float> pressureScaling{registry, "ps", DEFAULT_PRESSURE_SCALING};
     Property<double> targetGrindVolume{registry, "tgv", 18.0};
     Property<int> targetGrindDuration{registry, "tgd", 25000};
+    
+    // Grinder position calibration
+    Property<int> grinderRawFine{registry, "gr_fine", -1};
+    Property<int> grinderRawCoarse{registry, "gr_coarse", -1};
+    Property<int> grinderSteps{registry, "gr_steps", 30};
+    Property<bool> grinderReverseDirection{registry, "gr_rev", false};
+    
     Property<double> brewDelay{registry, "del_br", 800.0};
     Property<double> grindDelay{registry, "del_gd", 1000.0};
     Property<bool> delayAdjust{registry, "del_ad", true};

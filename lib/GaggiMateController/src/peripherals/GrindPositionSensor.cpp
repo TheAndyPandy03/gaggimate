@@ -1,9 +1,17 @@
 #include "GrindPositionSensor.h"
 
 #include <algorithm>
+#include <cmath>
 
-GrindPositionSensor::GrindPositionSensor(ADSAdc *adc, int raw_min, int raw_max, uint8_t channel)
-    : _raw_min(raw_min), _raw_max(raw_max), _adc(adc), _channel(channel) {}
+GrindPositionSensor::GrindPositionSensor(
+    ADSAdc *adc,
+    int rawFine,
+    int rawCoarse,
+    uint8_t channel)
+    : _rawFine(rawFine),
+      _rawCoarse(rawCoarse),
+      _adc(adc),
+      _channel(channel) {}
 
 void GrindPositionSensor::setup() {
     _adc->registerCallback([this](uint8_t channel, int reading) {
@@ -13,26 +21,66 @@ void GrindPositionSensor::setup() {
     });
 }
 
-void GrindPositionSensor::onReading(int reading) {
-    _raw_value = reading;
+void GrindPositionSensor::setCalibration(
+    int rawFine,
+    int rawCoarse,
+    int steps,
+    bool reverseDirection) {
 
-    if (_raw_max == _raw_min) {
-        ESP_LOGE(LOG_TAG, "Invalid calibration range: raw minimum and maximum are equal");
+    _rawFine = rawFine;
+    _rawCoarse = rawCoarse;
+    _steps = std::clamp(
+        steps,
+        MIN_GRINDER_STEPS,
+        MAX_GRINDER_STEPS);
+    _reverseDirection = reverseDirection;
+
+    _initialized = false;
+}
+
+void GrindPositionSensor::onReading(int reading) {
+    _rawValue = reading;
+    updatePosition(reading);
+}
+
+void GrindPositionSensor::updatePosition(int reading) {
+    if (_rawFine == _rawCoarse) {
+        ESP_LOGE(LOG_TAG,
+                 "Invalid calibration range");
         return;
     }
 
     float position =
-        static_cast<float>(reading - _raw_min) /
-        static_cast<float>(_raw_max - _raw_min);
+        static_cast<float>(reading - _rawFine) /
+        static_cast<float>(_rawCoarse - _rawFine);
 
-    position = std::clamp(position, 0.0f, 1.0f) * 100.0f;
+    position = std::clamp(position, 0.0f, 1.0f);
 
-    if (!_initialized) {
-        _position = position;
-        _initialized = true;
-    } else {
-        _position += GRIND_POSITION_FILTER_ALPHA * (position - _position);
+    if (_reverseDirection) {
+        position = 1.0f - position;
     }
 
-    ESP_LOGV(LOG_TAG, "Channel %d, ADC Reading: %d, Grind Position: %f", _channel, reading, _position);
+    float percent = position * 100.0f;
+
+    if (!_initialized) {
+        _position = percent;
+        _initialized = true;
+    } else {
+        _position +=
+            GRIND_POSITION_FILTER_ALPHA *
+            (percent - _position);
+    }
+
+    _step = std::clamp(
+        static_cast<int>(
+            std::lround(position * (_steps - 1))) + 1,
+        1,
+        _steps);
+
+    ESP_LOGV(
+        LOG_TAG,
+        "ADC=%d Position=%.2f%% Step=%d",
+        reading,
+        _position,
+        _step);
 }

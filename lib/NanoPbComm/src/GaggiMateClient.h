@@ -19,13 +19,31 @@
 class GaggiMateClient {
   public:
     using ConnectionCallback = std::function<void(bool connected)>;
+
     // Argument is the raw legacy INFO characteristic (JSON), if readable.
     using IncompatibleCallback = std::function<void(const String &info)>;
+
     using SystemInfoCallback =
-        std::function<void(const char *hardware, const char *version, uint32_t protocolVersion, bool dimming, bool pressure,
-                           bool ledControl, bool tof, std::vector<uint32_t> addons)>;
-    using SensorCallback = std::function<void(float temperature, float pressure, float puckFlow, float pumpFlow,
-                                              float puckResistance, float pumpPower, float heaterPower, float grindPosition)>;
+        std::function<void(const char *hardware,
+                           const char *version,
+                           uint32_t protocolVersion,
+                           bool dimming,
+                           bool pressure,
+                           bool ledControl,
+                           bool tof,
+                           std::vector<uint32_t> addons)>;
+
+    using SensorCallback =
+        std::function<void(float temperature,
+                           float pressure,
+                           float puckFlow,
+                           float pumpFlow,
+                           float puckResistance,
+                           float pumpPower,
+                           float heaterPower,
+                           float grindPosition,
+                           int32_t grinderPositionRaw)>;
+
     using ButtonCallback = std::function<void(uint8_t index, bool pressed)>;
     using AutotuneResultCallback = std::function<void(float kp, float ki, float kd, float kf)>;
     using VolumetricCallback = std::function<void(float volume)>;
@@ -37,67 +55,86 @@ class GaggiMateClient {
     void init(const String &deviceName);
     void loop();
 
-    // Connection lifecycle (driven from the display's main loop).
+    // Connection lifecycle.
     bool isReadyForConnection() const { return _transport.isReadyForConnection(); }
     bool connectToServer() { return _transport.connectToServer(); }
     bool isConnected() const { return _endpoint.isConnected(); }
     void disconnect() { _transport.disconnect(); }
 
-    // BLE round-trip latency (ms) measured by the reliability layer (send -> ACK).
-    // EWMA-smoothed; refreshed at least every ~2s by the keep-alive ping plus on
-    // every control update. hasLatency() is false until the first ACK of a link.
+    // BLE round-trip latency.
     uint32_t getLatencyMs() const { return _endpoint.latencyMs(); }
     uint32_t getLastLatencyMs() const { return _endpoint.lastLatencyMs(); }
     bool hasLatency() const { return _endpoint.hasLatency(); }
 
-    // Tight connection interval (responsive control) while active; relaxed when
-    // idle to give the shared radio back to Wi-Fi.
     void setLowLatency(bool active) { _transport.setLowLatency(active); }
 
-    // Native NimBLE client handle, used by ControllerOTA / status RSSI (OTA uses
-    // its own BLE service, independent of this protocol).
     NimBLEClient *getClient() const { return _transport.getNativeClient(); }
 
-    // Build a payload without sending (compose your own batch, then send()).
+    // Build payloads without sending.
     gm::Payload buildPing();
     gm::Payload buildBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     gm::Payload buildPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
     gm::Payload buildRelayControl(uint8_t index, bool open);
     gm::Payload buildPidSettings(float kp, float ki, float kd, float kf);
-    gm::Payload buildPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain,
-                                  float integralGain, float maxPower, float slipA, float slipB, float slipC, float slipD);
+    gm::Payload buildPumpSettings(float a,
+                                  float b,
+                                  float c,
+                                  float d,
+                                  float commutationGain,
+                                  float convergenceGain,
+                                  float integralGain,
+                                  float maxPower,
+                                  float slipA,
+                                  float slipB,
+                                  float slipC,
+                                  float slipD);
     gm::Payload buildAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     gm::Payload buildPressureScale(float scale);
     gm::Payload buildTare();
-    // Pack channel/brightness pairs into one LedControl payload; entries beyond
-    // the schema's per-message cap (LedControl.channels max_count) are dropped.
     gm::Payload buildLedControl(const LedChannelCommand *channels, size_t count);
+    gm::Payload buildGrinderCalibration(int32_t rawFine,
+                                        int32_t rawCoarse,
+                                        uint32_t steps,
+                                        bool reverseDirection);
 
-    // Commands (display -> controller)
+    // Commands (display -> controller).
     void sendPing();
     void sendBoilerControl(uint8_t index, BoilerControlMode mode, float setpoint);
     void sendPumpControl(uint8_t index, PumpControlMode mode, float power, float pressure, float flow);
-    void sendRelayControl(uint8_t index, bool open); // index 0 = brew valve, 1 = alt relay
+    void sendRelayControl(uint8_t index, bool open);
     void sendPidSettings(float kp, float ki, float kd, float kf);
-    void sendPumpSettings(float a, float b, float c, float d, float commutationGain, float convergenceGain, float integralGain,
-                          float maxPower, float slipA, float slipB, float slipC, float slipD);
+    void sendPumpSettings(float a,
+                          float b,
+                          float c,
+                          float d,
+                          float commutationGain,
+                          float convergenceGain,
+                          float integralGain,
+                          float maxPower,
+                          float slipA,
+                          float slipB,
+                          float slipC,
+                          float slipD);
     void sendAutotune(uint32_t testTime, uint32_t samples, uint32_t heaterWattage);
     void sendPressureScale(float scale);
     void tare();
-    // Drive several LED channels in one message (avoids per-channel sends that
-    // the outbound queue would coalesce down to a single channel).
     void sendLedControl(const LedChannelCommand *channels, size_t count);
+    void sendGrinderCalibration(int32_t rawFine,
+                                int32_t rawCoarse,
+                                uint32_t steps,
+                                bool reverseDirection);
 
-    // Send a pre-built payload / batch of payloads (one frame). Compose batches
-    // from build*() helpers -- e.g. the display's delta-based control update.
+    // Send pre-built payloads.
     void send(const gm::Payload &payload) { _endpoint.send(payload); }
-    void sendBatch(const gm::Payload *payloads, size_t count) { _endpoint.sendBatch(payloads, count); }
+    void sendBatch(const gm::Payload *payloads, size_t count) {
+        _endpoint.sendBatch(payloads, count);
+    }
 
-    // Fired when the connected controller is missing the framed-comms
-    // characteristics (old / incompatible firmware); link is kept for OTA.
-    void onIncompatibleController(IncompatibleCallback cb) { _incompatibleCb = std::move(cb); }
+    void onIncompatibleController(IncompatibleCallback cb) {
+        _incompatibleCb = std::move(cb);
+    }
 
-    // Response registrations (controller -> display)
+    // Response registrations.
     void onConnectionChanged(ConnectionCallback cb) { _connCb = std::move(cb); }
     void onSystemInfo(SystemInfoCallback cb) { _systemInfoCb = std::move(cb); }
     void onSensorData(SensorCallback cb) { _sensorCb = std::move(cb); }

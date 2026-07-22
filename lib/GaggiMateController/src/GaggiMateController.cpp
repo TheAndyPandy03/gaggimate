@@ -58,8 +58,31 @@ void GaggiMateController::setup() {
     if (this->ledController->isAvailable()) {
         _config.capabilites.ledControls = true;
         _config.capabilites.tof = true;
-        _comms.onLedControl([this](uint8_t channel, uint8_t brightness) { ledController->setChannel(channel, brightness); });
+        _comms.onLedControl([this](uint8_t channel, uint8_t brightness) {
+            ledController->setChannel(channel, brightness);
+        });
     }
+
+    // Grinder calibration is independent of the optional LED controller.
+    // Register it whenever the controller has a grinder position sensor.
+    _comms.onGrinderCalibration(
+        [this](int32_t rawFine,
+               int32_t rawCoarse,
+               uint32_t steps,
+               bool reverseDirection) {
+            if (grindPositionSensor == nullptr) {
+                ESP_LOGE(
+                    LOG_TAG,
+                    "Cannot apply grinder calibration: sensor is unavailable");
+                return;
+            }
+
+            grindPositionSensor->setCalibration(
+                rawFine,
+                rawCoarse,
+                static_cast<int>(steps),
+                reverseDirection);
+        });
 
     gm::DeviceCapabilities capabilities = gaggimate_Capabilities_init_zero;
     capabilities.dimming = _config.capabilites.dimming;
@@ -345,7 +368,8 @@ void GaggiMateController::sendSensorData() {
             }
         }
         batch[n++] = _comms.buildSensorData(this->thermocouple->read(), this->pressureSensor->getPressure(), puckFlow, pumpFlow,
-                                            puckResistance, pumpPower, heaterPower, this->grindPositionSensor->getPosition());
+                                            puckResistance, pumpPower, heaterPower, this->grindPositionSensor->getPosition(),
+                                        this->grindPositionSensor->getRawValue());
         _comms.sendUnreliableBatch(batch, n); // telemetry: fire-and-forget
     } else {
         _comms.sendSensorData(this->thermocouple->read(), 0.0f, 0.0f, 0.0f, 0.0f, pumpPower, heaterPower, 0.0f);
